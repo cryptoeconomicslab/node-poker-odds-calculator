@@ -100,20 +100,26 @@ export class Rank {
 export class Card {
   protected rank: number;
   protected suit: number;
+  public owner: string;
+  public timestamp: number;
 
-  public constructor(rank: number, suit: number) {
+  public constructor(rank: number, suit: number, owner: string, timestamp: number) {
     this.rank = rank;
     this.suit = suit;
+    this.owner = owner;
+    this.timestamp = timestamp;
   }
 
-  public static fromString(s: string): Card {
+  public static fromString(s: string, owner: string, timestamp: number): Card {
     const tmp: string = s.replace(/[^a-z0-9]/gi, '');
     if (tmp.length !== 2) {
       throw new Error(`Invalid card: ${tmp}`);
     }
     return new Card(
       Rank.fromString(tmp[0].toLowerCase()),
-      Suit.fromString(tmp[1].toLowerCase())
+      Suit.fromString(tmp[1].toLowerCase()),
+      owner,
+      timestamp
     );
   }
 

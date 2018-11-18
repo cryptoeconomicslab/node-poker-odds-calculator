@@ -85,12 +85,73 @@ export class OddsCalculator {
         }
       });
     }
+
+
+    const uniqCardsA: Card[] = _.uniqBy(allCards.slice(0,5), (card: Card) => {
+      return card.getRank() + '-' + card.getSuit();
+    })
+    const uniqCardsB: Card[] = _.uniqBy(allCards.slice(6,10), (card: Card) => {
+        return card.getRank() + '-' + card.getSuit();
+    })
     const uniqCards: Card[] = _.uniqBy(allCards, (card: Card) => {
       return card.getRank() + '-' + card.getSuit();
-    });
-
+    })
+    if (uniqCardsA.length !== allCards.slice(0,5).length) {
+        throw new Error("Detected duplicate cards in one's hands");
+    }
+    if (uniqCardsB.length !== allCards.slice(6,10).length) {
+        throw new Error("Detected duplicate cards in one's hands");
+    }
     if (uniqCards.length !== allCards.length) {
-      throw new Error('Detected duplicate cards');
+      // Score adjustment depends on hand
+      // Timestamp and Owner is needed for each card
+
+      let duplicatedCards = _.uniq(
+        allCards.slice(0,5).map((cardA:Card)=>{
+          let cardB = allCards.slice(6,10).filter((cardB:Card)=>{
+            return cardA.getRank() + '-' + cardA.getSuit() == cardB.getRank() + '-' + cardB.getSuit();
+          })[0]
+          return {
+            cardA: cardA,
+            cardB: cardB
+          }
+        })
+      )
+
+      // losen card shall be omited from evaluation (delete)
+      let losersCard = duplicatedCards.map(cardTuple=>{
+        if(cardTuple.cardA.getSuit() === Suit.SPADE || cardTuple.cardA.getSuit() == Suit.CLUB){
+          // Older card wins
+          if(cardTuple.cardA.timestamp < cardTuple.cardB.timestamp){
+            // loser
+            return cardTuple.cardB
+          } else {
+            // loser
+            return cardTuple.cardA
+          }
+        } else {
+          // Younger card wins
+          if(cardTuple.cardA.timestamp > cardTuple.cardB.timestamp){
+            // loser
+            return cardTuple.cardB
+          } else {
+            return cardTuple.cardA
+          }
+        }
+      })
+
+      // TODO: Owner name must be more general
+      let aliceArray: Card[] = []
+      let bobArray: Card[] = []
+      losersCard.map((loseCard: Card)=>{
+        if(loseCard.owner == "Alice"){
+          aliceArray = allCards.slice(1,5).filter((_card:Card)=> loseCard.getSuit() + "-" + loseCard.getRank() != _card.getSuit() + "-" + _card.getRank() )
+        } else {
+          bobArray = allCards.slice(6,10).filter((_card:Card)=> loseCard.getSuit() + "-" + loseCard.getRank() != _card.getSuit() + "-" + _card.getRank() )
+        }
+      })
+      allCards = aliceArray.concat(bobArray)
+
     }
 
     iterations = iterations || 0;
@@ -110,7 +171,7 @@ export class OddsCalculator {
     if (!board || board.length <= 4) {
       for (const suit of Suit.all()) {
         for (const rank of game.rank.all()) {
-          const c: Card = new Card(rank, suit);
+          const c: Card = new Card(rank, suit, "", 0); //TODO: set appropriate args
           let isUsed: boolean = false;
 
           if (board) {

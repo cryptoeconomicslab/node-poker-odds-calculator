@@ -19,11 +19,11 @@ try {
     throw Error(`invalid game variant: ${gameVariant}`);
   }
 
-  const board: CardGroup = ((<any> program).board ? CardGroup.fromString((<any> program).board) : null);
+  const board: CardGroup = ((<any> program).board ? CardGroup.fromString((<any> program).board, "", 0) : null);
   const cardgroups: CardGroup[] = [];
 
   for (const hand of (<any> program).args) {
-    cardgroups.push(CardGroup.fromString(hand));
+    cardgroups.push(CardGroup.fromString(hand, "", 0));
   }
 
   if (cardgroups.length <= 1) {
