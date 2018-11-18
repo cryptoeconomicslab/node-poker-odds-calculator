@@ -73,7 +73,7 @@ class OddsCalculator {
         const uniqCardsA = _.uniqBy(allCards.slice(0, 5), (card) => {
             return card.getRank() + '-' + card.getSuit();
         });
-        const uniqCardsB = _.uniqBy(allCards.slice(6, 10), (card) => {
+        const uniqCardsB = _.uniqBy(allCards.slice(5, 10), (card) => {
             return card.getRank() + '-' + card.getSuit();
         });
         const uniqCards = _.uniqBy(allCards, (card) => {
@@ -82,14 +82,14 @@ class OddsCalculator {
         if (uniqCardsA.length !== allCards.slice(0, 5).length) {
             throw new Error("Detected duplicate cards in one's hands");
         }
-        if (uniqCardsB.length !== allCards.slice(6, 10).length) {
+        if (uniqCardsB.length !== allCards.slice(5, 10).length) {
             throw new Error("Detected duplicate cards in one's hands");
         }
         if (uniqCards.length !== allCards.length) {
             // Score adjustment depends on hand
             // Timestamp and Owner is needed for each card
             let duplicatedCards = _.uniq(allCards.slice(0, 5).map((cardA) => {
-                let cardB = allCards.slice(6, 10).filter((cardB) => {
+                let cardB = allCards.slice(5, 10).filter((cardB) => {
                     return cardA.getRank() + '-' + cardA.getSuit() == cardB.getRank() + '-' + cardB.getSuit();
                 })[0];
                 return {
@@ -123,17 +123,33 @@ class OddsCalculator {
                 }
             });
             // TODO: Owner name must be more general
-            let aliceArray = [];
-            let bobArray = [];
+            // TODO: Check is this really work
+            let aliceCards = [];
+            let aliceCardGroup = new CardGroup_1.CardGroup();
+            let bobCards = [];
+            let bobCardGroup = new CardGroup_1.CardGroup();
             losersCard.map((loseCard) => {
-                if (loseCard.owner == "Alice") {
-                    aliceArray = allCards.slice(1, 5).filter((_card) => loseCard.getSuit() + "-" + loseCard.getRank() != _card.getSuit() + "-" + _card.getRank());
+                aliceCards = allCards.slice(0, 5).filter((_card) => loseCard.getSuit() + "-" + loseCard.getRank() != _card.getSuit() + "-" + _card.getRank());
+                bobCards = allCards.slice(5, 10).filter((_card) => loseCard.getSuit() + "-" + loseCard.getRank() != _card.getSuit() + "-" + _card.getRank());
+                if (loseCard.owner == "alice") {
+                    aliceCards.push(new Card_1.Card(Math.ceil(Math.random() * 13), Math.ceil(Math.random() * 3), "", 0));
+                    bobCards.push(loseCard);
                 }
                 else {
-                    bobArray = allCards.slice(6, 10).filter((_card) => loseCard.getSuit() + "-" + loseCard.getRank() != _card.getSuit() + "-" + _card.getRank());
+                    aliceCards.push(loseCard);
+                    bobCards.push(new Card_1.Card(Math.ceil(Math.random() * 13), Math.ceil(Math.random() * 3), "", 0));
                 }
             });
-            allCards = aliceArray.concat(bobArray);
+            aliceCards.map(o => {
+                aliceCardGroup.push(o);
+            });
+            bobCards.map(o => {
+                bobCardGroup.push(o);
+            });
+            cardgroups = [
+                aliceCardGroup,
+                bobCardGroup
+            ];
         }
         iterations = iterations || 0;
         let game;

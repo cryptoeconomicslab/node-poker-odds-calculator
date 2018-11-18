@@ -90,7 +90,7 @@ export class OddsCalculator {
     const uniqCardsA: Card[] = _.uniqBy(allCards.slice(0,5), (card: Card) => {
       return card.getRank() + '-' + card.getSuit();
     })
-    const uniqCardsB: Card[] = _.uniqBy(allCards.slice(6,10), (card: Card) => {
+    const uniqCardsB: Card[] = _.uniqBy(allCards.slice(5,10), (card: Card) => {
         return card.getRank() + '-' + card.getSuit();
     })
     const uniqCards: Card[] = _.uniqBy(allCards, (card: Card) => {
@@ -99,7 +99,7 @@ export class OddsCalculator {
     if (uniqCardsA.length !== allCards.slice(0,5).length) {
         throw new Error("Detected duplicate cards in one's hands");
     }
-    if (uniqCardsB.length !== allCards.slice(6,10).length) {
+    if (uniqCardsB.length !== allCards.slice(5,10).length) {
         throw new Error("Detected duplicate cards in one's hands");
     }
     if (uniqCards.length !== allCards.length) {
@@ -108,7 +108,7 @@ export class OddsCalculator {
 
       let duplicatedCards = _.uniq(
         allCards.slice(0,5).map((cardA:Card)=>{
-          let cardB = allCards.slice(6,10).filter((cardB:Card)=>{
+          let cardB = allCards.slice(5,10).filter((cardB:Card)=>{
             return cardA.getRank() + '-' + cardA.getSuit() == cardB.getRank() + '-' + cardB.getSuit();
           })[0]
           return {
@@ -142,17 +142,34 @@ export class OddsCalculator {
       })
 
       // TODO: Owner name must be more general
-      let aliceArray: Card[] = []
-      let bobArray: Card[] = []
+      // TODO: Check is this really work
+      let aliceCards: Card[] = []
+      let aliceCardGroup: CardGroup = new CardGroup()
+      let bobCards: Card[] = []
+      let bobCardGroup: CardGroup = new CardGroup()
       losersCard.map((loseCard: Card)=>{
-        if(loseCard.owner == "Alice"){
-          aliceArray = allCards.slice(1,5).filter((_card:Card)=> loseCard.getSuit() + "-" + loseCard.getRank() != _card.getSuit() + "-" + _card.getRank() )
+        aliceCards = allCards.slice(0,5).filter((_card:Card)=> loseCard.getSuit() + "-" + loseCard.getRank() != _card.getSuit() + "-" + _card.getRank() )
+        bobCards = allCards.slice(5,10).filter((_card:Card)=> loseCard.getSuit() + "-" + loseCard.getRank() != _card.getSuit() + "-" + _card.getRank() )
+        if(loseCard.owner == "alice"){
+          aliceCards.push(new Card(Math.ceil(Math.random()*13),Math.ceil(Math.random()*3),"",0))
+          bobCards.push(loseCard)
         } else {
-          bobArray = allCards.slice(6,10).filter((_card:Card)=> loseCard.getSuit() + "-" + loseCard.getRank() != _card.getSuit() + "-" + _card.getRank() )
+          aliceCards.push(loseCard)
+          bobCards.push(new Card(Math.ceil(Math.random()*13),Math.ceil(Math.random()*3),"",0))
         }
       })
-      allCards = aliceArray.concat(bobArray)
 
+      aliceCards.map(o=>{
+        aliceCardGroup.push(o)
+      })
+      bobCards.map(o=>{
+        bobCardGroup.push(o)
+      })
+
+      cardgroups = [
+        aliceCardGroup,
+        bobCardGroup
+      ]
     }
 
     iterations = iterations || 0;
