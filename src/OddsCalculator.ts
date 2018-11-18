@@ -117,6 +117,7 @@ export class OddsCalculator {
           }
         })
       )
+      .filter(dupTuple=> dupTuple.cardB )
 
       // losen card shall be omited from evaluation (delete)
       let losersCard = duplicatedCards.map(cardTuple=>{

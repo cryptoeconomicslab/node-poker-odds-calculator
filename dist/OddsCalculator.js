@@ -96,7 +96,8 @@ class OddsCalculator {
                     cardA: cardA,
                     cardB: cardB
                 };
-            }));
+            }))
+                .filter(dupTuple => dupTuple.cardB);
             // losen card shall be omited from evaluation (delete)
             let losersCard = duplicatedCards.map(cardTuple => {
                 if (cardTuple.cardA.getSuit() === Card_1.Suit.SPADE || cardTuple.cardA.getSuit() == Card_1.Suit.CLUB) {
