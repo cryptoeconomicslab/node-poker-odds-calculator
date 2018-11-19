@@ -89,18 +89,17 @@ Rank.names = [
 ];
 exports.Rank = Rank;
 class Card {
-    constructor(rank, suit, owner, timestamp) {
+    constructor(rank, suit, timestamp) {
         this.rank = rank;
         this.suit = suit;
-        this.owner = owner;
         this.timestamp = timestamp;
     }
-    static fromString(s, owner, timestamp) {
-        const tmp = s.replace(/[^a-z0-9]/gi, '');
-        if (tmp.length !== 2) {
-            throw new Error(`Invalid card: ${tmp}`);
+    static fromString(s) {
+        // TODO: Ts10003 <Rank><Suit><Blockheight32bytes> is the right way
+        if (s.length !== 34) {
+            throw new Error(`Card string must be 34 length, but given: ${s.length}`);
         }
-        return new Card(Rank.fromString(tmp[0].toLowerCase()), Suit.fromString(tmp[1].toLowerCase()), owner, timestamp);
+        return new Card(Rank.fromString(s.slice(0, 1).toLowerCase()), Suit.fromString(s.slice(1, 2).toLowerCase()), parseInt(s.slice(2, s.length), 16));
     }
     getRank() {
         return this.rank;

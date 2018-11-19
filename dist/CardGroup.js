@@ -12,14 +12,11 @@ class CardGroup extends Array {
     constructor() {
         super();
     }
-    static fromString(s, owner, timestamp) {
-        const tmp = s.replace(/[^a-z0-9]/gi, '');
-        if (tmp.length % 2 !== 0) {
-            throw new Error(`Invalid cards: ${s}`);
-        }
+    static fromString(s) {
+        var tmp = s.split(" ");
         const cardgroup = new CardGroup();
-        for (let i = 0; i < tmp.length; i = i + 2) {
-            cardgroup.push(Card_1.Card.fromString(tmp.substring(i, i + 2), owner, timestamp));
+        for (let i = 0; i < tmp.length; i++) {
+            cardgroup.push(Card_1.Card.fromString(tmp[i]));
         }
         return cardgroup;
     }

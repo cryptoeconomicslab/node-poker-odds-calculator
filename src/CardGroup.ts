@@ -12,15 +12,11 @@ export class CardGroup extends Array {
     super();
   }
 
-  public static fromString(s: string, owner: string, timestamp: number): CardGroup {
-    const tmp: string = s.replace(/[^a-z0-9]/gi, '');
-    if (tmp.length % 2 !== 0) {
-      throw new Error(`Invalid cards: ${s}`);
-    }
-
+  public static fromString(s: string): CardGroup {
+    var tmp = s.split(" ")
     const cardgroup: CardGroup = new CardGroup();
-    for (let i: number = 0; i < tmp.length; i = i + 2) {
-      cardgroup.push(Card.fromString(tmp.substring(i, i + 2), owner, timestamp));
+    for (let i: number = 0; i < tmp.length; i++) {
+      cardgroup.push(Card.fromString(tmp[i]));
     }
     return cardgroup;
   }

@@ -103,48 +103,59 @@ export class OddsCalculator {
         throw new Error("Detected duplicate cards in one's hands");
     }
     if (uniqCards.length !== allCards.length) {
-      // Score adjustment depends on hand
-      // Timestamp and Owner is needed for each card
+      // Shuffle for duplicated hand
+      // Timestamp is needed for each card
 
-      let duplicatedCards = _.uniq(
+      class CardTuple {
+        cardA: Card;
+        cardB: Card;
+        constructor(cardA:Card, cardB:Card){
+          this.cardA = cardA;
+          this.cardB = cardB;
+        }
+      }
+      let duplicatedCards:CardTuple[] = _.uniq(
         allCards.slice(0,5).map((cardA:Card)=>{
-          let cardB = allCards.slice(5,10).filter((cardB:Card)=>{
-            return cardA.getRank() + '-' + cardA.getSuit() == cardB.getRank() + '-' + cardB.getSuit();
-          })[0]
-          return {
-            cardA: cardA,
-            cardB: cardB
-          }
+          let cardB = allCards.slice(5,10).filter((cardB:Card)=> cardA.toString() == cardB.toString() )[0]
+          return new CardTuple(cardA, cardB)
         })
       )
       .filter(dupTuple=> dupTuple.cardB )
 
+      class LosersCard {
+        loser: number;
+        cardTuple: CardTuple;
+        constructor(loser:number, cardTuple:CardTuple){
+          this.loser = loser;
+          this.cardTuple = cardTuple;
+        }
+      }
       // losen card shall be omited from evaluation (delete)
-      let losersCard = duplicatedCards.map(cardTuple=>{
+      let losersCards:LosersCard[] = duplicatedCards.map((cardTuple:CardTuple)=>{
         if(cardTuple.cardA.getSuit() === Suit.SPADE || cardTuple.cardA.getSuit() == Suit.CLUB){
           // Older card wins
           if(cardTuple.cardA.timestamp < cardTuple.cardB.timestamp){
             // loser
-            return cardTuple.cardB
+            return new LosersCard(1, cardTuple)
           } else {
             // loser
-            return cardTuple.cardA
+            return new LosersCard(0, cardTuple)
           }
         } else {
           // Younger card wins
           if(cardTuple.cardA.timestamp > cardTuple.cardB.timestamp){
             // loser
-            return cardTuple.cardB
+            return new LosersCard(1, cardTuple)
           } else {
-            return cardTuple.cardA
+            return new LosersCard(0, cardTuple)
           }
         }
       })
 
 
       function generateNewCard():Card {
-        var newCard: Card = new Card(Math.ceil(Math.random()*13),Math.ceil(Math.random()*3),"",0)
-        if(allCards.map(c=> c.getSuit() + "-" + c.getRank() ).indexOf(newCard.getSuit() + "-" + newCard.getRank()) > -1){
+        var newCard: Card = new Card(Math.ceil(Math.random()*13),Math.ceil(Math.random()*3),Date.now())
+        if(allCards.map(c=> c.toString() ).indexOf(newCard.toString()) > -1){
           // if newcard is duplicated
           return generateNewCard()
         } else {
@@ -152,28 +163,26 @@ export class OddsCalculator {
         }
       }
 
-      // TODO: Owner name must be more general
-      // TODO: Check is this really work
       let aliceCards: Card[] = []
       let aliceCardGroup: CardGroup = new CardGroup()
       let bobCards: Card[] = []
       let bobCardGroup: CardGroup = new CardGroup()
-      losersCard.map((loseCard: Card)=>{
+      losersCards.map((loseCard: LosersCard)=>{
         var newCard: Card = generateNewCard()
-        aliceCards = allCards.slice(0,5).filter((_card:Card)=> loseCard.getSuit() + "-" + loseCard.getRank() != _card.getSuit() + "-" + _card.getRank() )
-        bobCards = allCards.slice(5,10).filter((_card:Card)=> loseCard.getSuit() + "-" + loseCard.getRank() != _card.getSuit() + "-" + _card.getRank() )
-        if(loseCard.owner == "Alice"){
+        aliceCards = allCards.slice(0,5).filter((_card:Card)=> loseCard.cardTuple.cardA.toString() != _card.toString() )
+        bobCards = allCards.slice(5,10).filter((_card:Card)=> loseCard.cardTuple.cardB.toString() != _card.toString() )
+        if(loseCard.loser === 0){
           aliceCards.push(newCard)
-          bobCards.push(loseCard)
+          bobCards.push(loseCard.cardTuple.cardA)
           console.log("Updated Alice's Hands: ", aliceCards.map(c=> c.toString() ).join(" "))
-        } else if (loseCard.owner == "Bob") {
-          aliceCards.push(loseCard)
+        } else if (loseCard.loser === 1) {
+          aliceCards.push(loseCard.cardTuple.cardB)
           bobCards.push(newCard)
           console.log("Updated Bob's Hands: ", bobCards.map(c=> c.toString() ).join(" "))
         } else {
           throw new Error("no owner for duplicated card")
         }
-        console.log(`Duplicated - ${loseCard.owner}: ${loseCard.toString()}=>${newCard.toString()}`)
+        console.log(`Duplicated - ${loseCard.loser === 0 ? "Alice": "Bob"}: ${loseCard.cardTuple.cardA.toString()}=>${newCard.toString()}`)
         allCards = aliceCards.concat(bobCards)
       })
 
@@ -207,7 +216,7 @@ export class OddsCalculator {
     if (!board || board.length <= 4) {
       for (const suit of Suit.all()) {
         for (const rank of game.rank.all()) {
-          const c: Card = new Card(rank, suit, "", 0); //TODO: set appropriate args
+          const c: Card = new Card(rank, suit, Date.now());
           let isUsed: boolean = false;
 
           if (board) {

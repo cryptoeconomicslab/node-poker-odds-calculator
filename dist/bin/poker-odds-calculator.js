@@ -14,10 +14,10 @@ try {
         program.outputHelp();
         throw Error(`invalid game variant: ${gameVariant}`);
     }
-    const board = (program.board ? index_1.CardGroup.fromString(program.board, "", 0) : null);
+    const board = (program.board ? index_1.CardGroup.fromString(program.board) : null);
     const cardgroups = [];
     for (const hand of program.args) {
-        cardgroups.push(index_1.CardGroup.fromString(hand, "", 0));
+        cardgroups.push(index_1.CardGroup.fromString(hand));
     }
     if (cardgroups.length <= 1) {
         throw new Error('You must enter at least 2 hands');

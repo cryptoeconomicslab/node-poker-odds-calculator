@@ -100,26 +100,23 @@ export class Rank {
 export class Card {
   protected rank: number;
   protected suit: number;
-  public owner: string;
   public timestamp: number;
 
-  public constructor(rank: number, suit: number, owner: string, timestamp: number) {
+  public constructor(rank: number, suit: number, timestamp: number) {
     this.rank = rank;
     this.suit = suit;
-    this.owner = owner;
     this.timestamp = timestamp;
   }
 
-  public static fromString(s: string, owner: string, timestamp: number): Card {
-    const tmp: string = s.replace(/[^a-z0-9]/gi, '');
-    if (tmp.length !== 2) {
-      throw new Error(`Invalid card: ${tmp}`);
+  public static fromString(s: string): Card {
+    // TODO: Ts10003 <Rank><Suit><Blockheight32bytes> is the right way
+    if (s.length !== 34) {
+      throw new Error(`Card string must be 34 length, but given: ${s.length}`);
     }
     return new Card(
-      Rank.fromString(tmp[0].toLowerCase()),
-      Suit.fromString(tmp[1].toLowerCase()),
-      owner,
-      timestamp
+      Rank.fromString(s.slice(0,1).toLowerCase()),
+      Suit.fromString(s.slice(1,2).toLowerCase()),
+      parseInt(s.slice(2,s.length), 16)
     );
   }
 
