@@ -141,6 +141,17 @@ export class OddsCalculator {
         }
       })
 
+
+      function generateNewCard():Card {
+        var newCard: Card = new Card(Math.ceil(Math.random()*13),Math.ceil(Math.random()*3),"",0)
+        if(allCards.map(c=> c.getSuit() + "-" + c.getRank() ).indexOf(newCard.getSuit() + "-" + newCard.getRank()) > -1){
+          // if newcard is duplicated
+          return generateNewCard()
+        } else {
+          return newCard
+        }
+      }
+
       // TODO: Owner name must be more general
       // TODO: Check is this really work
       let aliceCards: Card[] = []
@@ -148,15 +159,22 @@ export class OddsCalculator {
       let bobCards: Card[] = []
       let bobCardGroup: CardGroup = new CardGroup()
       losersCard.map((loseCard: Card)=>{
+        var newCard: Card = generateNewCard()
         aliceCards = allCards.slice(0,5).filter((_card:Card)=> loseCard.getSuit() + "-" + loseCard.getRank() != _card.getSuit() + "-" + _card.getRank() )
         bobCards = allCards.slice(5,10).filter((_card:Card)=> loseCard.getSuit() + "-" + loseCard.getRank() != _card.getSuit() + "-" + _card.getRank() )
-        if(loseCard.owner == "alice"){
-          aliceCards.push(new Card(Math.ceil(Math.random()*13),Math.ceil(Math.random()*3),"",0))
+        if(loseCard.owner == "Alice"){
+          aliceCards.push(newCard)
           bobCards.push(loseCard)
-        } else {
+          console.log("Updated Alice's Hands: ", aliceCards.map(c=> c.toString() ).join(" "))
+        } else if (loseCard.owner == "Bob") {
           aliceCards.push(loseCard)
-          bobCards.push(new Card(Math.ceil(Math.random()*13),Math.ceil(Math.random()*3),"",0))
+          bobCards.push(newCard)
+          console.log("Updated Bob's Hands: ", bobCards.map(c=> c.toString() ).join(" "))
+        } else {
+          throw new Error("no owner for duplicated card")
         }
+        console.log(`Duplicated - ${loseCard.owner}: ${loseCard.toString()}=>${newCard.toString()}`)
+        allCards = aliceCards.concat(bobCards)
       })
 
       aliceCards.map(o=>{
@@ -170,7 +188,7 @@ export class OddsCalculator {
         aliceCardGroup,
         bobCardGroup
       ]
-    }
+  }
 
     iterations = iterations || 0;
 

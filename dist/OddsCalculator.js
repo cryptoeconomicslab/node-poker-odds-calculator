@@ -122,6 +122,16 @@ class OddsCalculator {
                     }
                 }
             });
+            function generateNewCard() {
+                var newCard = new Card_1.Card(Math.ceil(Math.random() * 13), Math.ceil(Math.random() * 3), "", 0);
+                if (allCards.map(c => c.getSuit() + "-" + c.getRank()).indexOf(newCard.getSuit() + "-" + newCard.getRank()) > -1) {
+                    // if newcard is duplicated
+                    return generateNewCard();
+                }
+                else {
+                    return newCard;
+                }
+            }
             // TODO: Owner name must be more general
             // TODO: Check is this really work
             let aliceCards = [];
@@ -129,16 +139,24 @@ class OddsCalculator {
             let bobCards = [];
             let bobCardGroup = new CardGroup_1.CardGroup();
             losersCard.map((loseCard) => {
+                var newCard = generateNewCard();
                 aliceCards = allCards.slice(0, 5).filter((_card) => loseCard.getSuit() + "-" + loseCard.getRank() != _card.getSuit() + "-" + _card.getRank());
                 bobCards = allCards.slice(5, 10).filter((_card) => loseCard.getSuit() + "-" + loseCard.getRank() != _card.getSuit() + "-" + _card.getRank());
-                if (loseCard.owner == "alice") {
-                    aliceCards.push(new Card_1.Card(Math.ceil(Math.random() * 13), Math.ceil(Math.random() * 3), "", 0));
+                if (loseCard.owner == "Alice") {
+                    aliceCards.push(newCard);
                     bobCards.push(loseCard);
+                    console.log("Updated Alice's Hands: ", aliceCards.map(c => c.toString()).join(" "));
+                }
+                else if (loseCard.owner == "Bob") {
+                    aliceCards.push(loseCard);
+                    bobCards.push(newCard);
+                    console.log("Updated Bob's Hands: ", bobCards.map(c => c.toString()).join(" "));
                 }
                 else {
-                    aliceCards.push(loseCard);
-                    bobCards.push(new Card_1.Card(Math.ceil(Math.random() * 13), Math.ceil(Math.random() * 3), "", 0));
+                    throw new Error("no owner for duplicated card");
                 }
+                console.log(`Duplicated - ${loseCard.owner}: ${loseCard.toString()}=>${newCard.toString()}`);
+                allCards = aliceCards.concat(bobCards);
             });
             aliceCards.map(o => {
                 aliceCardGroup.push(o);
