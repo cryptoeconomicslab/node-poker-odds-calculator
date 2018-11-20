@@ -100,16 +100,15 @@ export class Rank {
 export class Card {
   protected rank: number;
   protected suit: number;
-  public timestamp: number;
+  public blockheight: number;
 
-  public constructor(rank: number, suit: number, timestamp: number) {
+  public constructor(rank: number, suit: number, blockheight: number) {
     this.rank = rank;
     this.suit = suit;
-    this.timestamp = timestamp;
+    this.blockheight = blockheight;
   }
 
   public static fromString(s: string): Card {
-    // TODO: Ts10003 <Rank><Suit><Blockheight32bytes> is the right way
     if (s.length !== 34) {
       throw new Error(`Card string must be 34 length, but given: ${s.length}`);
     }
@@ -118,6 +117,16 @@ export class Card {
       Suit.fromString(s.slice(1,2).toLowerCase()),
       parseInt(s.slice(2,s.length), 16)
     );
+  }
+
+  public static generateNewCard(allCards:Card[]):Card {
+    var newCard: Card = new Card(Math.ceil(Math.random()*13),Math.ceil(Math.random()*3),Date.now())
+    if(allCards.map(c=> c.toString() ).indexOf(newCard.toString()) > -1){
+      // if newcard is duplicated
+      return Card.generateNewCard(allCards)
+    } else {
+      return newCard
+    }
   }
 
   public getRank(): number {
@@ -165,5 +174,23 @@ export class Card {
       }
     }
     return s;
+  }
+}
+
+export class CardTuple {
+  cardA: Card;
+  cardB: Card;
+  constructor(cardA:Card, cardB:Card){
+    this.cardA = cardA;
+    this.cardB = cardB;
+  }
+}
+
+export class LosersCard {
+  loser: number;
+  cardTuple: CardTuple;
+  constructor(loser:number, cardTuple:CardTuple){
+    this.loser = loser;
+    this.cardTuple = cardTuple;
   }
 }

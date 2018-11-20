@@ -46,12 +46,35 @@ class HandEquity {
     }
 }
 exports.HandEquity = HandEquity;
+class Record {
+    constructor(who, srcCard, destCard, newHands) {
+        this.who = who;
+        this.srcCard = srcCard;
+        this.destCard = destCard;
+        this.newHands = newHands;
+    }
+    toString() {
+        return `${this.who === 0 ? "Player1" : "Player2"}: ${this.srcCard.toString()}=>${this.destCard.toString()} - ${this.newHands.map(c => c.toString()).join(" ")}`;
+    }
+}
+class DuplicationLog {
+    constructor() {
+        this.records = [];
+    }
+    addRecord(record) {
+        this.records.push(record);
+    }
+    toString() {
+        return `${this.records.map(r => r.toString()).join("\n")}`;
+    }
+}
 class OddsCalculator {
-    constructor(equities, handranks, iterations, elapsedTime) {
+    constructor(equities, handranks, iterations, elapsedTime, duplicationLog) {
         this.equities = equities;
         this.handranks = handranks;
         this.iterations = iterations;
         this.elapsedTime = elapsedTime;
+        this.duplicationLog = duplicationLog;
     }
     static calculate(cardgroups, board, gameVariant, iterations) {
         if (board && [0, 3, 4, 5].indexOf(board.length) === -1) {
@@ -59,6 +82,7 @@ class OddsCalculator {
         }
         const allGroups = board ? cardgroups.concat(board) : cardgroups;
         let allCards = [];
+        let duplicationLog = new DuplicationLog();
         allGroups.forEach((group) => {
             allCards = allCards.concat(group);
         });
@@ -87,80 +111,57 @@ class OddsCalculator {
         }
         if (uniqCards.length !== allCards.length) {
             // Shuffle for duplicated hand
-            // Timestamp is needed for each card
-            class CardTuple {
-                constructor(cardA, cardB) {
-                    this.cardA = cardA;
-                    this.cardB = cardB;
-                }
-            }
+            // blockheight is needed for each card
             let duplicatedCards = _.uniq(allCards.slice(0, 5).map((cardA) => {
                 let cardB = allCards.slice(5, 10).filter((cardB) => cardA.toString() == cardB.toString())[0];
-                return new CardTuple(cardA, cardB);
+                return new Card_1.CardTuple(cardA, cardB);
             }))
                 .filter(dupTuple => dupTuple.cardB);
-            class LosersCard {
-                constructor(loser, cardTuple) {
-                    this.loser = loser;
-                    this.cardTuple = cardTuple;
-                }
-            }
             // losen card shall be omited from evaluation (delete)
             let losersCards = duplicatedCards.map((cardTuple) => {
                 if (cardTuple.cardA.getSuit() === Card_1.Suit.SPADE || cardTuple.cardA.getSuit() == Card_1.Suit.CLUB) {
                     // Older card wins
-                    if (cardTuple.cardA.timestamp < cardTuple.cardB.timestamp) {
+                    if (cardTuple.cardA.blockheight < cardTuple.cardB.blockheight) {
                         // loser
-                        return new LosersCard(1, cardTuple);
+                        return new Card_1.LosersCard(1, cardTuple);
                     }
                     else {
                         // loser
-                        return new LosersCard(0, cardTuple);
+                        return new Card_1.LosersCard(0, cardTuple);
                     }
                 }
                 else {
                     // Younger card wins
-                    if (cardTuple.cardA.timestamp > cardTuple.cardB.timestamp) {
+                    if (cardTuple.cardA.blockheight > cardTuple.cardB.blockheight) {
                         // loser
-                        return new LosersCard(1, cardTuple);
+                        return new Card_1.LosersCard(1, cardTuple);
                     }
                     else {
-                        return new LosersCard(0, cardTuple);
+                        return new Card_1.LosersCard(0, cardTuple);
                     }
                 }
             });
-            function generateNewCard() {
-                var newCard = new Card_1.Card(Math.ceil(Math.random() * 13), Math.ceil(Math.random() * 3), Date.now());
-                if (allCards.map(c => c.toString()).indexOf(newCard.toString()) > -1) {
-                    // if newcard is duplicated
-                    return generateNewCard();
-                }
-                else {
-                    return newCard;
-                }
-            }
             let aliceCards = [];
             let aliceCardGroup = new CardGroup_1.CardGroup();
             let bobCards = [];
             let bobCardGroup = new CardGroup_1.CardGroup();
             losersCards.map((loseCard) => {
-                var newCard = generateNewCard();
+                var newCard = Card_1.Card.generateNewCard(allCards);
                 aliceCards = allCards.slice(0, 5).filter((_card) => loseCard.cardTuple.cardA.toString() != _card.toString());
                 bobCards = allCards.slice(5, 10).filter((_card) => loseCard.cardTuple.cardB.toString() != _card.toString());
                 if (loseCard.loser === 0) {
                     aliceCards.push(newCard);
                     bobCards.push(loseCard.cardTuple.cardA);
-                    console.log("Updated Alice's Hands: ", aliceCards.map(c => c.toString()).join(" "));
+                    duplicationLog.addRecord(new Record(0, loseCard.cardTuple.cardA, newCard, aliceCards));
                 }
                 else if (loseCard.loser === 1) {
                     aliceCards.push(loseCard.cardTuple.cardB);
                     bobCards.push(newCard);
-                    console.log("Updated Bob's Hands: ", bobCards.map(c => c.toString()).join(" "));
+                    duplicationLog.addRecord(new Record(1, loseCard.cardTuple.cardB, newCard, bobCards));
                 }
                 else {
                     throw new Error("no owner for duplicated card");
                 }
-                console.log(`Duplicated - ${loseCard.loser === 0 ? "Alice" : "Bob"}: ${loseCard.cardTuple.cardA.toString()}=>${newCard.toString()}`);
                 allCards = aliceCards.concat(bobCards);
             });
             aliceCards.map(o => {
@@ -307,7 +308,7 @@ class OddsCalculator {
             }
         }
         const jobEndedAt = +new Date();
-        return new OddsCalculator(equities, handranks, iterations, jobEndedAt - jobStartedAt);
+        return new OddsCalculator(equities, handranks, iterations, jobEndedAt - jobStartedAt, duplicationLog);
     }
     getIterationCount() {
         return this.iterations;

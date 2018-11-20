@@ -89,17 +89,26 @@ Rank.names = [
 ];
 exports.Rank = Rank;
 class Card {
-    constructor(rank, suit, timestamp) {
+    constructor(rank, suit, blockheight) {
         this.rank = rank;
         this.suit = suit;
-        this.timestamp = timestamp;
+        this.blockheight = blockheight;
     }
     static fromString(s) {
-        // TODO: Ts10003 <Rank><Suit><Blockheight32bytes> is the right way
         if (s.length !== 34) {
             throw new Error(`Card string must be 34 length, but given: ${s.length}`);
         }
         return new Card(Rank.fromString(s.slice(0, 1).toLowerCase()), Suit.fromString(s.slice(1, 2).toLowerCase()), parseInt(s.slice(2, s.length), 16));
+    }
+    static generateNewCard(allCards) {
+        var newCard = new Card(Math.ceil(Math.random() * 13), Math.ceil(Math.random() * 3), Date.now());
+        if (allCards.map(c => c.toString()).indexOf(newCard.toString()) > -1) {
+            // if newcard is duplicated
+            return Card.generateNewCard(allCards);
+        }
+        else {
+            return newCard;
+        }
     }
     getRank() {
         return this.rank;
@@ -151,4 +160,18 @@ class Card {
     }
 }
 exports.Card = Card;
+class CardTuple {
+    constructor(cardA, cardB) {
+        this.cardA = cardA;
+        this.cardB = cardB;
+    }
+}
+exports.CardTuple = CardTuple;
+class LosersCard {
+    constructor(loser, cardTuple) {
+        this.loser = loser;
+        this.cardTuple = cardTuple;
+    }
+}
+exports.LosersCard = LosersCard;
 //# sourceMappingURL=Card.js.map

@@ -3,7 +3,7 @@
  *
  */
 import * as _ from 'lodash';
-import { Card, Suit } from './Card';
+import { Card, Suit, CardTuple, LosersCard } from './Card';
 import { CardGroup } from './CardGroup';
 import { FullDeckGame, IGame, ShortDeckGame } from './Game';
 import { HandRank } from './HandRank';
@@ -52,6 +52,38 @@ export class HandEquity {
   }
 }
 
+
+class Record {
+  who:number;
+  srcCard:Card;
+  destCard:Card;
+  newHands:Card[];
+  constructor(who:number, srcCard:Card, destCard:Card, newHands:Card[]){
+    this.who = who;
+    this.srcCard = srcCard;
+    this.destCard = destCard;
+    this.newHands = newHands;
+  }
+  toString(){
+    return `${this.who === 0 ? "Player1" : "Player2"}: ${this.srcCard.toString()}=>${this.destCard.toString()} - ${this.newHands.map(c=> c.toString() ).join(" ")}`
+  }
+}
+class DuplicationLog {
+  public records: Record[];
+
+  constructor(){
+    this.records = []
+  }
+
+  addRecord(record:Record){
+    this.records.push(record)
+  }
+
+  toString(){
+    return `${this.records.map(r=> r.toString() ).join("\n")}`
+  }
+}
+
 export class OddsCalculator {
   public static DEFAULT_ITERATIONS: number = 100000;
   public equities: HandEquity[];
@@ -59,12 +91,14 @@ export class OddsCalculator {
   protected handranks: HandRank[];
   protected iterations: number;
   protected elapsedTime: number;
+  protected duplicationLog: DuplicationLog;
 
-  protected constructor(equities: HandEquity[], handranks: HandRank[], iterations: number, elapsedTime: number) {
+  protected constructor(equities: HandEquity[], handranks: HandRank[], iterations: number, elapsedTime: number, duplicationLog: DuplicationLog) {
     this.equities = equities;
     this.handranks = handranks;
     this.iterations = iterations;
     this.elapsedTime = elapsedTime;
+    this.duplicationLog = duplicationLog;
   }
 
   public static calculate(cardgroups: CardGroup[], board?: CardGroup, gameVariant?: string, iterations?: number): OddsCalculator {
@@ -74,6 +108,7 @@ export class OddsCalculator {
 
     const allGroups: CardGroup[] = board ? cardgroups.concat(board) : cardgroups;
     let allCards: Card[] = [];
+    let duplicationLog: DuplicationLog = new DuplicationLog();
     allGroups.forEach((group: CardGroup) => {
       allCards = allCards.concat(group);
     });
@@ -104,16 +139,8 @@ export class OddsCalculator {
     }
     if (uniqCards.length !== allCards.length) {
       // Shuffle for duplicated hand
-      // Timestamp is needed for each card
+      // blockheight is needed for each card
 
-      class CardTuple {
-        cardA: Card;
-        cardB: Card;
-        constructor(cardA:Card, cardB:Card){
-          this.cardA = cardA;
-          this.cardB = cardB;
-        }
-      }
       let duplicatedCards:CardTuple[] = _.uniq(
         allCards.slice(0,5).map((cardA:Card)=>{
           let cardB = allCards.slice(5,10).filter((cardB:Card)=> cardA.toString() == cardB.toString() )[0]
@@ -122,19 +149,11 @@ export class OddsCalculator {
       )
       .filter(dupTuple=> dupTuple.cardB )
 
-      class LosersCard {
-        loser: number;
-        cardTuple: CardTuple;
-        constructor(loser:number, cardTuple:CardTuple){
-          this.loser = loser;
-          this.cardTuple = cardTuple;
-        }
-      }
       // losen card shall be omited from evaluation (delete)
       let losersCards:LosersCard[] = duplicatedCards.map((cardTuple:CardTuple)=>{
         if(cardTuple.cardA.getSuit() === Suit.SPADE || cardTuple.cardA.getSuit() == Suit.CLUB){
           // Older card wins
-          if(cardTuple.cardA.timestamp < cardTuple.cardB.timestamp){
+          if(cardTuple.cardA.blockheight < cardTuple.cardB.blockheight){
             // loser
             return new LosersCard(1, cardTuple)
           } else {
@@ -143,7 +162,7 @@ export class OddsCalculator {
           }
         } else {
           // Younger card wins
-          if(cardTuple.cardA.timestamp > cardTuple.cardB.timestamp){
+          if(cardTuple.cardA.blockheight > cardTuple.cardB.blockheight){
             // loser
             return new LosersCard(1, cardTuple)
           } else {
@@ -152,37 +171,25 @@ export class OddsCalculator {
         }
       })
 
-
-      function generateNewCard():Card {
-        var newCard: Card = new Card(Math.ceil(Math.random()*13),Math.ceil(Math.random()*3),Date.now())
-        if(allCards.map(c=> c.toString() ).indexOf(newCard.toString()) > -1){
-          // if newcard is duplicated
-          return generateNewCard()
-        } else {
-          return newCard
-        }
-      }
-
       let aliceCards: Card[] = []
       let aliceCardGroup: CardGroup = new CardGroup()
       let bobCards: Card[] = []
       let bobCardGroup: CardGroup = new CardGroup()
       losersCards.map((loseCard: LosersCard)=>{
-        var newCard: Card = generateNewCard()
+        var newCard: Card = Card.generateNewCard(allCards)
         aliceCards = allCards.slice(0,5).filter((_card:Card)=> loseCard.cardTuple.cardA.toString() != _card.toString() )
         bobCards = allCards.slice(5,10).filter((_card:Card)=> loseCard.cardTuple.cardB.toString() != _card.toString() )
         if(loseCard.loser === 0){
           aliceCards.push(newCard)
           bobCards.push(loseCard.cardTuple.cardA)
-          console.log("Updated Alice's Hands: ", aliceCards.map(c=> c.toString() ).join(" "))
+          duplicationLog.addRecord(new Record(0, loseCard.cardTuple.cardA, newCard, aliceCards))
         } else if (loseCard.loser === 1) {
           aliceCards.push(loseCard.cardTuple.cardB)
           bobCards.push(newCard)
-          console.log("Updated Bob's Hands: ", bobCards.map(c=> c.toString() ).join(" "))
+          duplicationLog.addRecord(new Record(1, loseCard.cardTuple.cardB, newCard, bobCards))
         } else {
           throw new Error("no owner for duplicated card")
         }
-        console.log(`Duplicated - ${loseCard.loser === 0 ? "Alice": "Bob"}: ${loseCard.cardTuple.cardA.toString()}=>${newCard.toString()}`)
         allCards = aliceCards.concat(bobCards)
       })
 
@@ -351,7 +358,7 @@ export class OddsCalculator {
     }
 
     const jobEndedAt: number = +new Date();
-    return new OddsCalculator(equities, handranks, iterations, jobEndedAt - jobStartedAt);
+    return new OddsCalculator(equities, handranks, iterations, jobEndedAt - jobStartedAt, duplicationLog);
   }
 
   public getIterationCount(): number {
