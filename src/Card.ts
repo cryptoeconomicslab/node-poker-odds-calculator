@@ -140,7 +140,7 @@ export class Card {
 
   public static generateNewCard(allCards:Card[]):Card {
     var newCard: Card = new Card(Math.ceil(Math.random()*13),Math.ceil(Math.random()*3),Date.now())
-    if(allCards.map(c=> c.toString() ).indexOf(newCard.toString()) > -1){
+    if(allCards.map(c=> c.toString() ).indexOf(newCard.toString()) !== -1){
       // if newcard is duplicated
       return Card.generateNewCard(allCards)
     } else {

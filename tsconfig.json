@@ -1,6 +1,9 @@
 {
   "compilerOptions": {
     "target": "ES6",
+    "lib": [
+      "es2017"
+    ],
     "module": "commonjs",
     "outDir": "./dist/",
     "sourceMap": true,

@@ -60,7 +60,7 @@ export class OddsCalculator {
   protected handranks: HandRank[];
   protected iterations: number;
   protected elapsedTime: number;
-  protected duplicationLog: DuplicationLog;
+  public duplicationLog: DuplicationLog;
 
   protected constructor(equities: HandEquity[], handranks: HandRank[], iterations: number, elapsedTime: number, duplicationLog: DuplicationLog) {
     this.equities = equities;
@@ -173,7 +173,7 @@ export class OddsCalculator {
         aliceCardGroup,
         bobCardGroup
       ]
-  }
+    }
 
     iterations = iterations || 0;
 

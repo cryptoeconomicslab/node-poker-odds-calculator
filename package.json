@@ -11,6 +11,7 @@
     "build": "rm -rf dist/* && rm -rf dts/* && tsc",
     "lint": "tslint --project tsconfig.json -e ./src/bin/*.ts ./src/{,**/}*.ts ./tests/{,**/}*.ts --format verbose",
     "test": "NODE_ENV=test mocha --recursive --timeout 4000 --require ts-node/register --bail test/**/*.ts",
+    "test:plasma": "NODE_ENV=test mocha --bail test/07-plasma-odds-calculator.ts --require ts-node/register --timeout 10000",
     "cover": "NODE_ENV=test nyc --report-dir coverage npm t"
   },
   "repository": {
