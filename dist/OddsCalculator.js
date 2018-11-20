@@ -9,6 +9,7 @@ const Card_1 = require("./Card");
 const CardGroup_1 = require("./CardGroup");
 const Game_1 = require("./Game");
 const HandRank_1 = require("./HandRank");
+const DuplicationLog_1 = require("./DuplicationLog");
 class HandEquity {
     constructor() {
         this.possibleHandsCount = 0;
@@ -46,28 +47,6 @@ class HandEquity {
     }
 }
 exports.HandEquity = HandEquity;
-class Record {
-    constructor(who, srcCard, destCard, newHands) {
-        this.who = who;
-        this.srcCard = srcCard;
-        this.destCard = destCard;
-        this.newHands = newHands;
-    }
-    toString() {
-        return `${this.who === 0 ? "Player1" : "Player2"}: ${this.srcCard.toString()}=>${this.destCard.toString()} - ${this.newHands.map(c => c.toString()).join(" ")}`;
-    }
-}
-class DuplicationLog {
-    constructor() {
-        this.records = [];
-    }
-    addRecord(record) {
-        this.records.push(record);
-    }
-    toString() {
-        return `${this.records.map(r => r.toString()).join("\n")}`;
-    }
-}
 class OddsCalculator {
     constructor(equities, handranks, iterations, elapsedTime, duplicationLog) {
         this.equities = equities;
@@ -82,7 +61,7 @@ class OddsCalculator {
         }
         const allGroups = board ? cardgroups.concat(board) : cardgroups;
         let allCards = [];
-        let duplicationLog = new DuplicationLog();
+        let duplicationLog = new DuplicationLog_1.DuplicationLog();
         allGroups.forEach((group) => {
             allCards = allCards.concat(group);
         });
@@ -152,12 +131,12 @@ class OddsCalculator {
                 if (loseCard.loser === 0) {
                     aliceCards.push(newCard);
                     bobCards.push(loseCard.cardTuple.cardA);
-                    duplicationLog.addRecord(new Record(0, loseCard.cardTuple.cardA, newCard, aliceCards));
+                    duplicationLog.addRecord(new DuplicationLog_1.Record(0, loseCard.cardTuple.cardA, newCard, aliceCards));
                 }
                 else if (loseCard.loser === 1) {
                     aliceCards.push(loseCard.cardTuple.cardB);
                     bobCards.push(newCard);
-                    duplicationLog.addRecord(new Record(1, loseCard.cardTuple.cardB, newCard, bobCards));
+                    duplicationLog.addRecord(new DuplicationLog_1.Record(1, loseCard.cardTuple.cardB, newCard, bobCards));
                 }
                 else {
                     throw new Error("no owner for duplicated card");

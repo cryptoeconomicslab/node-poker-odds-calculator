@@ -118,6 +118,25 @@ export class Card {
       parseInt(s.slice(2,s.length), 16)
     );
   }
+  public toId(){
+    let asm = this.toString()
+    let nstr:string = asm.slice(0,1)
+    let sstr:string = asm.slice(1,2)
+    var n:number = 0;
+    var s:number = 0;
+    if(nstr == "K") n = 0
+    else if (nstr == "A") n = 1
+    else if (nstr == "T") n = 10
+    else if (nstr == "J") n = 11
+    else if (nstr == "Q") n = 12
+    else n = parseInt(nstr)
+    if (sstr == "s") s = 0
+    else if (sstr == "h") s = 1
+    else if (sstr == "d") s = 2
+    else if (sstr == "c") s = 3
+    else s = parseInt(sstr)
+    return s*13+n
+  }
 
   public static generateNewCard(allCards:Card[]):Card {
     var newCard: Card = new Card(Math.ceil(Math.random()*13),Math.ceil(Math.random()*3),Date.now())

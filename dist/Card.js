@@ -100,6 +100,36 @@ class Card {
         }
         return new Card(Rank.fromString(s.slice(0, 1).toLowerCase()), Suit.fromString(s.slice(1, 2).toLowerCase()), parseInt(s.slice(2, s.length), 16));
     }
+    toId() {
+        let asm = this.toString();
+        let nstr = asm.slice(0, 1);
+        let sstr = asm.slice(1, 2);
+        var n = 0;
+        var s = 0;
+        if (nstr == "K")
+            n = 0;
+        else if (nstr == "A")
+            n = 1;
+        else if (nstr == "T")
+            n = 10;
+        else if (nstr == "J")
+            n = 11;
+        else if (nstr == "Q")
+            n = 12;
+        else
+            n = parseInt(nstr);
+        if (sstr == "s")
+            s = 0;
+        else if (sstr == "h")
+            s = 1;
+        else if (sstr == "d")
+            s = 2;
+        else if (sstr == "c")
+            s = 3;
+        else
+            s = parseInt(sstr);
+        return s * 13 + n;
+    }
     static generateNewCard(allCards) {
         var newCard = new Card(Math.ceil(Math.random() * 13), Math.ceil(Math.random() * 3), Date.now());
         if (allCards.map(c => c.toString()).indexOf(newCard.toString()) > -1) {

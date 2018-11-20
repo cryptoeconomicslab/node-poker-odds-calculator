@@ -7,6 +7,7 @@ import { Card, Suit, CardTuple, LosersCard } from './Card';
 import { CardGroup } from './CardGroup';
 import { FullDeckGame, IGame, ShortDeckGame } from './Game';
 import { HandRank } from './HandRank';
+import { DuplicationLog, Record } from './DuplicationLog';
 
 export class HandEquity {
   protected possibleHandsCount: number;
@@ -49,38 +50,6 @@ export class HandEquity {
       s += ` (Tie: ${tie}%)`;
     }
     return s;
-  }
-}
-
-
-class Record {
-  who:number;
-  srcCard:Card;
-  destCard:Card;
-  newHands:Card[];
-  constructor(who:number, srcCard:Card, destCard:Card, newHands:Card[]){
-    this.who = who;
-    this.srcCard = srcCard;
-    this.destCard = destCard;
-    this.newHands = newHands;
-  }
-  toString(){
-    return `${this.who === 0 ? "Player1" : "Player2"}: ${this.srcCard.toString()}=>${this.destCard.toString()} - ${this.newHands.map(c=> c.toString() ).join(" ")}`
-  }
-}
-class DuplicationLog {
-  public records: Record[];
-
-  constructor(){
-    this.records = []
-  }
-
-  addRecord(record:Record){
-    this.records.push(record)
-  }
-
-  toString(){
-    return `${this.records.map(r=> r.toString() ).join("\n")}`
   }
 }
 
