@@ -131,13 +131,22 @@ class Card {
         return s * 13 + n;
     }
     static generateNewCard(allCards) {
-        var newCard = new Card(Math.ceil(Math.random() * 13), Math.ceil(Math.random() * 3), Date.now());
-        if (allCards.map(c => c.toString()).indexOf(newCard.toString()) > -1) {
+        var newCard = new Card(Card.generateRank(), Math.ceil(Math.random() * 3), Date.now());
+        if (allCards.map(c => c.toString()).indexOf(newCard.toString()) !== -1) {
             // if newcard is duplicated
             return Card.generateNewCard(allCards);
         }
         else {
             return newCard;
+        }
+    }
+    static generateRank() {
+        let rank = Math.ceil(Math.random() * 13);
+        if (rank < 2 || 14 < rank) {
+            return Card.generateRank();
+        }
+        else {
+            return rank;
         }
     }
     getRank() {
